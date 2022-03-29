@@ -1,3 +1,4 @@
+import sls from "serverless-http";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
@@ -46,8 +47,12 @@ app.use(errorHandle);
   try {
     await db.connect();
     Promise.all([UserModel.dummyData(), ProfileModel.initDataDefault()]);
-    app.listen(PORT, () => console.log(`Server is running at port ${PORT}`));
   } catch (error) {
     console.error(`${error}`);
   }
 })();
+
+if (process.env.NODE_ENV === "local") {
+  app.listen(PORT, () => console.log(`Server is running at port ${PORT}`));
+}
+module.exports.handler = sls(app);

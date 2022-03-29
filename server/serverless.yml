@@ -1,0 +1,35 @@
+service: express-serverless
+provider:
+  name: aws
+  runtime: nodejs14.x
+  region: ap-southeast-1
+  stage: ${env:NODE_ENV}
+  environment:
+    NODE_ENV: ${env:NODE_ENV}
+
+plugins:
+  - serverless-offline
+  - serverless-apigw-binary
+
+custom:
+  apigwBinary:
+    types:
+      - "multipart/form-data"
+
+package:
+  patterns:
+  - 'dist/**'
+  # - 'node_modules/**'
+
+functions:
+  app:
+    handler: dist/index.handler
+    events:
+      - http:
+          path: /api
+          method: ANY
+          cors: true
+      - http:
+          path: /api/{proxy+}
+          method: ANY
+          cors: true

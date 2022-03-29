@@ -1,0 +1,59 @@
+# This is a basic workflow to help you get started with Actions
+
+name: build-be-lambda
+
+# Controls when the action will run.
+on:
+  # Triggers the workflow on push or pull request events but only for the Dev-AU branch
+  push:
+    branches: [ live ]
+    paths:
+     - 'server/**'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14.x]
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Replace Action
+        uses: datamonsters/replace-action@v2
+        with:
+          files: './server/src/env/.env'
+          replacements: '<DB_USERNAME>=${{ secrets.DB_USERNAME }},<DB_PASSWORD>=${{ secrets.DB_PASSWORD }},<DB_NAME>=${{ secrets.DB_NAME }},<ACCESS_TOKEN_SECRET>=${{ secrets.ACCESS_TOKEN_SECRET }},<ACCESS_TOKEN_LIFE>=${{ secrets.ACCESS_TOKEN_LIFE }},<COOKIE_TOKEN>=${{ secrets.COOKIE_TOKEN }}'
+
+      - name: npm install and npm run build
+        run: |
+          cd ./api-server
+          npm install -g serverless
+          yarn install
+          yarn build
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: deploy lambda
+        run: |
+           cd ./server
+           export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+           export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+           export AWS_REGION=${{ secrets.AWS_REGION }}
+           export AWS_DEFAULT_REGION=${{ secrets.AWS_REGION }}
+           SLS_DEBUG=* NODE_ENV=production sls deploy
