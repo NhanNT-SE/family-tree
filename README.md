@@ -13,7 +13,7 @@ cd server
 yarn install
 ```
 
-### Start project
+### Start server
 
 ```python
 # start project in local
@@ -36,7 +36,7 @@ cd web-app
 yarn install
 ```
 
-### Start project
+### Start react app
 
 ```python
 # start project in local
